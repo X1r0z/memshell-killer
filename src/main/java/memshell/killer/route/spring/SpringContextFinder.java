@@ -34,7 +34,7 @@ public class SpringContextFinder {
             if (mapping != null) {
                 mappings.add(mapping);
             }
-            Class<?> handlerMappingType = classFor(context, "org.springframework.web.servlet.HandlerMapping");
+            Class<?> handlerMappingType = loadHandlerMappingType(context);
             if (handlerMappingType != null) {
                 mappings.addAll(Reflects.asList(Reflects.invokeAnyQuiet(context, "getBeansOfType", handlerMappingType)));
             }
@@ -134,13 +134,13 @@ public class SpringContextFinder {
         }
     }
 
-    private Class<?> classFor(Object context, String name) {
+    private Class<?> loadHandlerMappingType(Object context) {
         ClassLoader loader = context == null ? null : context.getClass().getClassLoader();
         try {
-            return Class.forName(name, false, loader);
+            return Class.forName("org.springframework.web.servlet.HandlerMapping", false, loader);
         } catch (Throwable ignored) {
             try {
-                return Class.forName(name);
+                return Class.forName("org.springframework.web.servlet.HandlerMapping");
             } catch (Throwable ignoredAgain) {
                 return null;
             }
