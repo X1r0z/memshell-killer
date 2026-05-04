@@ -19,7 +19,16 @@ public class AgentMain {
         try {
             String json = new String(Base64.getUrlDecoder().decode(args), StandardCharsets.UTF_8);
             request = Jsons.GSON.fromJson(json, OperationRequest.class);
+            Throwable moduleAccessError = null;
+            try {
+                ModuleAccessSupport.bypassClassModule(instrumentation);
+            } catch (Throwable t) {
+                moduleAccessError = t;
+            }
             response = new OperationDispatcher(instrumentation).dispatch(request);
+            if (moduleAccessError != null) {
+                response.errors.add(stackTrace(moduleAccessError));
+            }
         } catch (Throwable t) {
             response = OperationResponse.error(stackTrace(t));
         }
