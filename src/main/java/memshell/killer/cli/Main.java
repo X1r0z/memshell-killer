@@ -11,6 +11,7 @@ import picocli.CommandLine.Parameters;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Base64;
 import java.util.concurrent.Callable;
 
@@ -40,14 +41,26 @@ public class Main implements Runnable {
         public Integer call() throws Exception {
             CommandRequest request = request();
             File result = File.createTempFile("memshell-killer-", ".json");
-            request.resultPath = result.getAbsolutePath();
-            String json = GSON.toJson(request);
-            String args = Base64.getUrlEncoder().withoutPadding().encodeToString(json.getBytes(StandardCharsets.UTF_8));
-            String jar = Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-            AttachClient.loadAgent(pid, jar, args);
-            byte[] bytes = Files.readAllBytes(result.toPath());
-            System.out.println(new String(bytes, StandardCharsets.UTF_8));
-            return 0;
+            Path resultPath = result.toPath();
+            try {
+                request.resultPath = result.getAbsolutePath();
+                String json = GSON.toJson(request);
+                String args = Base64.getUrlEncoder().withoutPadding().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+                String jar = Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+                AttachClient.loadAgent(pid, jar, args);
+                if (!Files.exists(resultPath) || Files.size(resultPath) == 0) {
+                    throw new IllegalStateException("agent did not write a response to " + resultPath);
+                }
+                byte[] bytes = Files.readAllBytes(resultPath);
+                System.out.println(new String(bytes, StandardCharsets.UTF_8));
+                return 0;
+            } finally {
+                try {
+                    Files.deleteIfExists(resultPath);
+                } catch (Exception ignored) {
+                    result.deleteOnExit();
+                }
+            }
         }
     }
 

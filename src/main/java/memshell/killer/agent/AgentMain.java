@@ -44,7 +44,9 @@ public class AgentMain {
     private static void writeResult(String path, CommandResponse response) {
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(Files.newOutputStream(Paths.get(path)), StandardCharsets.UTF_8))) {
             writer.print(GSON.toJson(response));
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            System.err.println("agent failed to write result to " + path);
+            t.printStackTrace(System.err);
         }
     }
 
