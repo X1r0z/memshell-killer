@@ -1,6 +1,7 @@
-package memshell.killer.agent;
+package memshell.killer.service;
 
-import memshell.killer.core.JadResult;
+import memshell.killer.agent.ClassFileDumper;
+import memshell.killer.core.DecompileResult;
 import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.api.OutputSinkFactory;
 
@@ -9,27 +10,36 @@ import java.io.FileOutputStream;
 import java.lang.instrument.Instrumentation;
 import java.util.*;
 
-public class JadService {
+public class DecompileService {
     private final Instrumentation instrumentation;
 
-    public JadService(Instrumentation instrumentation) {
+    public DecompileService(Instrumentation instrumentation) {
         this.instrumentation = instrumentation;
     }
 
-    public JadResult decompile(String className, String methodName) throws Exception {
-        Class<?> clazz = ClassSearch.exact(instrumentation, className);
+    public DecompileResult decompile(String className, String methodName) throws Exception {
+        Class<?> clazz = findLoadedClass(className);
         byte[] bytes = ClassFileDumper.dump(instrumentation, clazz);
         return decompileBytes(className, methodName, bytes);
     }
 
-    static JadResult decompileBytes(String className, String methodName, byte[] bytes) throws Exception {
+    private Class<?> findLoadedClass(String className) {
+        for (Class<?> clazz : instrumentation.getAllLoadedClasses()) {
+            if (clazz.getName().equals(className)) {
+                return clazz;
+            }
+        }
+        throw new IllegalArgumentException("class not loaded: " + className);
+    }
+
+    static DecompileResult decompileBytes(String className, String methodName, byte[] bytes) throws Exception {
         File file = File.createTempFile(className.replace('.', '_'), ".class");
         try {
             try (FileOutputStream out = new FileOutputStream(file)) {
                 out.write(bytes);
             }
             String source = decompileFile(file, methodName);
-            JadResult result = new JadResult();
+            DecompileResult result = new DecompileResult();
             result.className = className;
             result.method = methodName;
             result.source = source;

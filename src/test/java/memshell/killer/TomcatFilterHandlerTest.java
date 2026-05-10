@@ -1,7 +1,7 @@
 package memshell.killer;
 
-import memshell.killer.route.RemoveResult;
-import memshell.killer.route.RouteEntry;
+import memshell.killer.core.RemoveResult;
+import memshell.killer.core.DumpResult;
 import memshell.killer.route.tomcat.TomcatFilterHandler;
 import org.junit.Test;
 
@@ -17,7 +17,7 @@ public class TomcatFilterHandlerTest {
     public void dumpUsesFilterDefWhenFilterConfigHasNoInstance() {
         FilterContext context = new FilterContext();
 
-        List<RouteEntry> routes = handler(context).dump();
+        List<DumpResult> routes = handler(context).dump();
 
         assertEquals(1, routes.size());
         assertEquals(UninitializedFilter.class.getName(), routes.get(0).className);

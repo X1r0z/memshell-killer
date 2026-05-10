@@ -1,7 +1,8 @@
-package memshell.killer.agent;
+package memshell.killer.service;
 
-import memshell.killer.core.JadResult;
-import memshell.killer.core.Jsons;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import memshell.killer.core.DecompileResult;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -9,14 +10,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 
-public class JadServiceTest {
+public class DecompileServiceTest {
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+
     @Test
     public void deletesDumpedClassFileAfterDecompile() throws Exception {
         String className = Fixture.class.getName();
         String prefix = className.replace('.', '_');
         deleteExistingTempClasses(prefix);
 
-        JadResult result = JadService.decompileBytes(className, null, classBytes(Fixture.class));
+        DecompileResult result = DecompileService.decompileBytes(className, null, classBytes(Fixture.class));
 
         Assert.assertEquals(className, result.className);
         Assert.assertTrue(result.source.contains("hello"));
@@ -26,9 +29,9 @@ public class JadServiceTest {
     @Test
     public void serializesOriginalJsonFields() throws Exception {
         String className = Fixture.class.getName();
-        JadResult result = JadService.decompileBytes(className, "hello", classBytes(Fixture.class));
+        DecompileResult result = DecompileService.decompileBytes(className, "hello", classBytes(Fixture.class));
 
-        String json = Jsons.GSON.toJson(result);
+        String json = GSON.toJson(result);
 
         Assert.assertTrue(json, json.contains("\"className\""));
         Assert.assertTrue(json, json.contains("\"method\""));

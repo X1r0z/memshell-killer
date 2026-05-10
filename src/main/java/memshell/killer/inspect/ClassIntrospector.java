@@ -1,6 +1,4 @@
-package memshell.killer.util;
-
-import memshell.killer.core.ClassMetadata;
+package memshell.killer.inspect;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -11,26 +9,26 @@ public final class ClassIntrospector {
     private ClassIntrospector() {
     }
 
-    public static ClassMetadata inspect(Class<?> clazz) {
-        ClassMetadata metadata = new ClassMetadata();
-        metadata.className = clazz.getName();
+    public static ClassInfo inspect(Class<?> clazz) {
+        ClassInfo classInfo = new ClassInfo();
+        classInfo.className = clazz.getName();
         ClassLoader loader = clazz.getClassLoader();
-        metadata.classLoader = loader == null ? "bootstrap" : loader.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(loader));
+        classInfo.classLoader = loader == null ? "bootstrap" : loader.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(loader));
         Class<?> superClass = clazz.getSuperclass();
-        metadata.superClass = superClass == null ? null : superClass.getName();
+        classInfo.superClass = superClass == null ? null : superClass.getName();
         for (Class<?> iface : clazz.getInterfaces()) {
-            metadata.interfaces.add(iface.getName());
+            classInfo.interfaces.add(iface.getName());
         }
         for (Field field : clazz.getDeclaredFields()) {
-            metadata.fields.add(Modifier.toString(field.getModifiers()) + " " + field.getType().getTypeName() + " " + field.getName());
+            classInfo.fields.add(Modifier.toString(field.getModifiers()) + " " + field.getType().getTypeName() + " " + field.getName());
         }
         for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
-            metadata.methods.add(signature(clazz.getSimpleName(), constructor.getParameterTypes(), null, constructor.getModifiers()));
+            classInfo.methods.add(signature(clazz.getSimpleName(), constructor.getParameterTypes(), null, constructor.getModifiers()));
         }
         for (Method method : clazz.getDeclaredMethods()) {
-            metadata.methods.add(signature(method.getName(), method.getParameterTypes(), method.getReturnType(), method.getModifiers()));
+            classInfo.methods.add(signature(method.getName(), method.getParameterTypes(), method.getReturnType(), method.getModifiers()));
         }
-        return metadata;
+        return classInfo;
     }
 
     private static String signature(String name, Class<?>[] parameterTypes, Class<?> returnType, int modifiers) {

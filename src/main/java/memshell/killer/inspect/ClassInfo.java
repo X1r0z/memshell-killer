@@ -1,9 +1,9 @@
-package memshell.killer.core;
+package memshell.killer.inspect;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClassMetadata {
+public class ClassInfo {
     public String className;
     public String classLoader;
     public String superClass;

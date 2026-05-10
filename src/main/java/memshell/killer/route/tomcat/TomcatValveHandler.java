@@ -1,8 +1,8 @@
 package memshell.killer.route.tomcat;
 
-import memshell.killer.core.RouteType;
-import memshell.killer.route.RemoveResult;
-import memshell.killer.route.RouteEntry;
+import memshell.killer.route.RouteType;
+import memshell.killer.core.RemoveResult;
+import memshell.killer.core.DumpResult;
 import memshell.killer.route.RouteHandler;
 import memshell.killer.util.Reflects;
 
@@ -17,8 +17,8 @@ public class TomcatValveHandler implements RouteHandler {
     }
 
     @Override
-    public List<RouteEntry> dump() {
-        List<RouteEntry> entries = new ArrayList<>();
+    public List<DumpResult> dump() {
+        List<DumpResult> entries = new ArrayList<>();
         for (Object context : new TomcatContextFinder().find()) {
             Object pipeline = Reflects.invokeQuiet(context, "getPipeline", null, null);
             Object valves = pipeline == null ? null : Reflects.invokeQuiet(pipeline, "getValves", null, null);

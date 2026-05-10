@@ -1,7 +1,5 @@
-package memshell.killer.agent;
+package memshell.killer.route;
 
-import memshell.killer.core.RouteType;
-import memshell.killer.route.RouteHandler;
 import memshell.killer.route.spring.SpringControllerHandler;
 import memshell.killer.route.spring.SpringInterceptorHandler;
 import memshell.killer.route.tomcat.TomcatFilterHandler;
@@ -12,10 +10,10 @@ import memshell.killer.route.tomcat.TomcatValveHandler;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HandlerRegistry {
+public class RouteRegistry {
     private final Map<String, RouteHandler> handlers = new HashMap<>();
 
-    public HandlerRegistry() {
+    public RouteRegistry() {
         handlers.put(RouteType.FILTER, new TomcatFilterHandler());
         handlers.put(RouteType.LISTENER, new TomcatListenerHandler());
         handlers.put(RouteType.VALVE, new TomcatValveHandler());

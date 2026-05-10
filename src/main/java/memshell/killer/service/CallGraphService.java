@@ -1,5 +1,6 @@
-package memshell.killer.agent;
+package memshell.killer.service;
 
+import memshell.killer.agent.ClassFileDumper;
 import memshell.killer.core.CallGraphResult;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
@@ -25,9 +26,18 @@ public class CallGraphService {
     }
 
     public CallGraphResult analyze(String className) throws Exception {
-        Class<?> clazz = ClassSearch.exact(instrumentation, className);
+        Class<?> clazz = findLoadedClass(className);
         byte[] bytes = ClassFileDumper.dump(instrumentation, clazz);
         return analyzeBytes(className, bytes);
+    }
+
+    private Class<?> findLoadedClass(String className) {
+        for (Class<?> clazz : instrumentation.getAllLoadedClasses()) {
+            if (clazz.getName().equals(className)) {
+                return clazz;
+            }
+        }
+        throw new IllegalArgumentException("class not loaded: " + className);
     }
 
     public static CallGraphResult analyzeBytes(String className, byte[] bytes) {

@@ -1,6 +1,6 @@
 package memshell.killer.core;
 
-public class JadResult {
+public class DecompileResult {
     public String className;
     public String method;
     public String source;

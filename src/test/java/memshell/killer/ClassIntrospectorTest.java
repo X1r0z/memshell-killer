@@ -1,20 +1,20 @@
 package memshell.killer;
 
-import memshell.killer.core.ClassMetadata;
-import memshell.killer.util.ClassIntrospector;
+import memshell.killer.inspect.ClassInfo;
+import memshell.killer.inspect.ClassIntrospector;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class ClassIntrospectorTest {
     @Test
     public void inspectsDeclaredFieldsAndMethodsOnly() {
-        ClassMetadata metadata = ClassIntrospector.inspect(Child.class);
-        Assert.assertEquals(Child.class.getName(), metadata.className);
-        Assert.assertEquals(Parent.class.getName(), metadata.superClass);
-        Assert.assertTrue(metadata.fields.toString(), metadata.fields.toString().contains("childField"));
-        Assert.assertFalse(metadata.fields.toString(), metadata.fields.toString().contains("parentField"));
-        Assert.assertTrue(metadata.methods.toString(), metadata.methods.toString().contains("childMethod"));
-        Assert.assertFalse(metadata.methods.toString(), metadata.methods.toString().contains("parentMethod"));
+        ClassInfo classInfo = ClassIntrospector.inspect(Child.class);
+        Assert.assertEquals(Child.class.getName(), classInfo.className);
+        Assert.assertEquals(Parent.class.getName(), classInfo.superClass);
+        Assert.assertTrue(classInfo.fields.toString(), classInfo.fields.toString().contains("childField"));
+        Assert.assertFalse(classInfo.fields.toString(), classInfo.fields.toString().contains("parentField"));
+        Assert.assertTrue(classInfo.methods.toString(), classInfo.methods.toString().contains("childMethod"));
+        Assert.assertFalse(classInfo.methods.toString(), classInfo.methods.toString().contains("parentMethod"));
     }
 
     static class Parent {

@@ -1,7 +1,7 @@
 package memshell.killer.route.tomcat;
 
-import memshell.killer.route.RouteEntry;
-import memshell.killer.util.ClassIntrospector;
+import memshell.killer.core.DumpResult;
+import memshell.killer.inspect.ClassIntrospector;
 import memshell.killer.util.Reflects;
 
 import java.lang.reflect.Array;
@@ -18,8 +18,8 @@ public final class TomcatSupport {
         return context.getClass().getName() + suffix;
     }
 
-    public static RouteEntry entry(String type, Object context, String name, List<String> routes, Class<?> clazz) {
-        RouteEntry entry = new RouteEntry();
+    public static DumpResult entry(String type, Object context, String name, List<String> routes, Class<?> clazz) {
+        DumpResult entry = new DumpResult();
         entry.type = type;
         entry.context = contextName(context);
         entry.name = name;

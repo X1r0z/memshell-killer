@@ -1,6 +1,6 @@
 package memshell.killer.core;
 
-public class OperationRequest {
+public class CommandRequest {
     public String command;
     public String type;
     public String className;

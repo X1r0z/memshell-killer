@@ -1,8 +1,8 @@
 package memshell.killer.route.spring;
 
-import memshell.killer.core.RouteType;
-import memshell.killer.route.RemoveResult;
-import memshell.killer.route.RouteEntry;
+import memshell.killer.route.RouteType;
+import memshell.killer.core.RemoveResult;
+import memshell.killer.core.DumpResult;
 import memshell.killer.route.RouteHandler;
 import memshell.killer.util.Reflects;
 
@@ -17,8 +17,8 @@ public class SpringInterceptorHandler implements RouteHandler {
     }
 
     @Override
-    public List<RouteEntry> dump() {
-        List<RouteEntry> entries = new ArrayList<>();
+    public List<DumpResult> dump() {
+        List<DumpResult> entries = new ArrayList<>();
         for (Object mapping : handlerMappings()) {
             addInterceptors(mapping, entries, Reflects.getQuiet(mapping, "adaptedInterceptors"));
             addInterceptors(mapping, entries, Reflects.getQuiet(mapping, "interceptors"));
@@ -40,7 +40,7 @@ public class SpringInterceptorHandler implements RouteHandler {
         return result;
     }
 
-    private void addInterceptors(Object context, List<RouteEntry> entries, Object value) {
+    private void addInterceptors(Object context, List<DumpResult> entries, Object value) {
         for (Object item : Reflects.asList(value)) {
             Object interceptor = unwrapMappedInterceptor(item);
             if (interceptor != null) {

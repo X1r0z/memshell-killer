@@ -26,8 +26,8 @@ Do not treat a class name match alone as proof. Base conclusions on route metada
 |----------|---------|
 | List every supported route registration | `dump <pid>` |
 | List one route type | `dump --type filter <pid>` |
-| Decompile a loaded class | `jad --class-name <className> <pid>` |
-| Decompile one method | `jad --class-name <className> --method <methodName> <pid>` |
+| Decompile a loaded class | `decompile --class-name <className> <pid>` |
+| Decompile one method | `decompile --class-name <className> --method <methodName> <pid>` |
 | Build local call evidence for a class | `call --class-name <className> <pid>` |
 | Remove a confirmed route | `remove --type <type> --class-name <className> <pid>` |
 
@@ -66,7 +66,7 @@ Check `.success` first. If it is `false`, report `.errors[]` and resolve the PID
 
 Default output is structured JSON.
 
-Always prefer `jq` when reading CLI JSON output, especially for broad `dump`, large `jad`, or noisy `call` results. Do not paste or inspect large raw JSON blobs when a focused `jq` filter can extract the fields needed for triage, evidence, removal, or verification. Use `jq` first to check `.success`, surface `.errors[]`, and reduce `.data` to the smallest useful shape before reasoning from the output.
+Always prefer `jq` when reading CLI JSON output, especially for broad `dump`, large `decompile`, or noisy `call` results. Do not paste or inspect large raw JSON blobs when a focused `jq` filter can extract the fields needed for triage, evidence, removal, or verification. Use `jq` first to check `.success`, surface `.errors[]`, and reduce `.data` to the smallest useful shape before reasoning from the output.
 
 Pipe through `jq` to reduce context and extract only what you need:
 
@@ -80,7 +80,7 @@ java -jar ./scripts/memshell-killer.jar dump <pid> \
   | jq '.data | to_entries[] | select(.value | type == "array") | .value[] | select((.routes // []) | any(. == "/*" or . == "/**" or . == "/")) | {type, context, routes, name, className}'
 
 # Decompiled source
-java -jar ./scripts/memshell-killer.jar jad --class-name com.example.SuspiciousFilter <pid> \
+java -jar ./scripts/memshell-killer.jar decompile --class-name com.example.SuspiciousFilter <pid> \
   | jq -r '.data.source'
 
 # Call chains
@@ -113,10 +113,10 @@ java -jar ./scripts/memshell-killer.jar dump --type filter <pid>
 java -jar ./scripts/memshell-killer.jar dump --type interceptor <pid>
 ```
 
-### `jad` - Decompile a loaded class
+### `decompile` - Decompile a loaded class
 
 ```bash
-java -jar ./scripts/memshell-killer.jar jad --class-name <className> [--method <methodName>] <pid>
+java -jar ./scripts/memshell-killer.jar decompile --class-name <className> [--method <methodName>] <pid>
 ```
 
 | Option | Description |
@@ -128,8 +128,8 @@ java -jar ./scripts/memshell-killer.jar jad --class-name <className> [--method <
 Use full-class decompilation first. Narrow with `--method` only when route metadata or prior evidence points to one relevant handler method.
 
 ```bash
-java -jar ./scripts/memshell-killer.jar jad --class-name com.example.SuspiciousFilter <pid>
-java -jar ./scripts/memshell-killer.jar jad --class-name com.example.SuspiciousFilter --method doFilter <pid>
+java -jar ./scripts/memshell-killer.jar decompile --class-name com.example.SuspiciousFilter <pid>
+java -jar ./scripts/memshell-killer.jar decompile --class-name com.example.SuspiciousFilter --method doFilter <pid>
 ```
 
 Summarize behavior instead of pasting excessive source. Highlight request triggers, command execution, dynamic class loading, reflection, script execution, network callbacks, file writes, and response-writing logic.
@@ -178,7 +178,7 @@ After removal, read `data.removed` and `data.details`, then rerun a focused `dum
 1. **Identify scope**: get the target PID from the user, or use `jps -lv` / `jcmd` when they ask for help finding it. Confirm the current user can attach to the process.
 2. **Dump before changes**: run a broad `dump` unless the user already gave a route type. Use `jq` to extract only relevant route fields from the JSON output, then save or quote the important pre-removal fields.
 3. **Triage routes**: prioritize unknown or recently loaded classes, broad patterns such as `/*` or `/**`, hidden paths, unusual classloaders, unexpected runtime registrations, and classes whose fields or methods suggest reflection, command execution, crypto/Base64 helpers, custom class loading, request header triggers, response writing, or network callbacks.
-4. **Decompile candidates**: use `jad --class-name`; narrow with `--method` only when a specific handler method is clearly relevant. Use `jq -r '.data.source'` for source extraction and summarize behavior rather than pasting excessive source.
+4. **Decompile candidates**: use `decompile --class-name`; narrow with `--method` only when a specific handler method is clearly relevant. Use `jq -r '.data.source'` for source extraction and summarize behavior rather than pasting excessive source.
 5. **Review calls when useful**: use `call --class-name` when decompiled behavior is unclear or when you need concise evidence that request-handling methods reach suspicious sinks. Use `jq` to select only relevant chains or sinks. Treat it as local class-level evidence, not whole-application data-flow proof.
 6. **Remove only confirmed malicious registrations**: before removal, state the PID, route type, class name, context, routes, and evidence. Use the exact `type` and `className` from the dump result.
 7. **Verify**: rerun the same focused dump and confirm the suspicious class is absent. If it persists, consider duplicate registrations, wrong route type, multiple contexts, classloader mismatch, wrappers/adapters/proxies, or active reinjection.

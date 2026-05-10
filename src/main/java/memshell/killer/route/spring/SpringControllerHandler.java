@@ -1,8 +1,8 @@
 package memshell.killer.route.spring;
 
-import memshell.killer.core.RouteType;
-import memshell.killer.route.RemoveResult;
-import memshell.killer.route.RouteEntry;
+import memshell.killer.route.RouteType;
+import memshell.killer.core.RemoveResult;
+import memshell.killer.core.DumpResult;
 import memshell.killer.route.RouteHandler;
 import memshell.killer.util.Reflects;
 
@@ -22,8 +22,8 @@ public class SpringControllerHandler implements RouteHandler {
     }
 
     @Override
-    public List<RouteEntry> dump() {
-        List<RouteEntry> entries = new ArrayList<>();
+    public List<DumpResult> dump() {
+        List<DumpResult> entries = new ArrayList<>();
         for (Object mapping : handlerMappings()) {
             dumpRequestMappingHandlerMapping(mapping, entries);
             dumpUrlHandlerMaps(mapping, entries);
@@ -43,7 +43,7 @@ public class SpringControllerHandler implements RouteHandler {
         return result;
     }
 
-    private void dumpRequestMappingHandlerMapping(Object mapping, List<RouteEntry> entries) {
+    private void dumpRequestMappingHandlerMapping(Object mapping, List<DumpResult> entries) {
         Object handlerMethods = handlerMethods(mapping);
         if (handlerMethods instanceof Map) {
             for (Map.Entry<?, ?> item : ((Map<?, ?>) handlerMethods).entrySet()) {
@@ -60,7 +60,7 @@ public class SpringControllerHandler implements RouteHandler {
         return new SpringContextFinder().handlerMappings();
     }
 
-    private void dumpUrlHandlerMaps(Object mapping, List<RouteEntry> entries) {
+    private void dumpUrlHandlerMaps(Object mapping, List<DumpResult> entries) {
         Object handlerMap = Reflects.getQuiet(mapping, "handlerMap");
         if (handlerMap instanceof Map) {
             for (Map.Entry<?, ?> item : ((Map<?, ?>) handlerMap).entrySet()) {

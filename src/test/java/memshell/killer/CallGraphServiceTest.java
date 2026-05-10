@@ -1,8 +1,9 @@
 package memshell.killer;
 
-import memshell.killer.agent.CallGraphService;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import memshell.killer.service.CallGraphService;
 import memshell.killer.core.CallGraphResult;
-import memshell.killer.core.Jsons;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -10,6 +11,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 public class CallGraphServiceTest {
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+
     @Test
     public void extractsInternalChainsAndFieldReceiverCalls() throws Exception {
         byte[] bytes = classBytes(Fixture.class);
@@ -27,7 +30,7 @@ public class CallGraphServiceTest {
         byte[] bytes = classBytes(Fixture.class);
         CallGraphResult result = CallGraphService.analyzeBytes(Fixture.class.getName(), bytes);
 
-        String json = Jsons.GSON.toJson(result);
+        String json = GSON.toJson(result);
 
         Assert.assertTrue(json, json.contains("\"className\""));
         Assert.assertTrue(json, json.contains("\"edges\""));

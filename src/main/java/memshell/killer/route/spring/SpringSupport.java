@@ -1,7 +1,7 @@
 package memshell.killer.route.spring;
 
-import memshell.killer.route.RouteEntry;
-import memshell.killer.util.ClassIntrospector;
+import memshell.killer.core.DumpResult;
+import memshell.killer.inspect.ClassIntrospector;
 import memshell.killer.util.Reflects;
 
 import java.util.Arrays;
@@ -23,17 +23,13 @@ public final class SpringSupport {
         return Reflects.invokeQuiet(context, "getBean", new Class[]{String.class}, new Object[]{name});
     }
 
-    public static Object bean(Object context, Class<?> type) {
-        return Reflects.invokeQuiet(context, "getBean", new Class[]{Class.class}, new Object[]{type});
-    }
-
     public static String contextName(Object context) {
         Object id = Reflects.invokeQuiet(context, "getId", null, null);
         return context.getClass().getName() + (id == null ? "" : "(" + id + ")");
     }
 
-    public static RouteEntry entry(String type, Object context, String name, List<String> routes, Class<?> clazz) {
-        RouteEntry entry = new RouteEntry();
+    public static DumpResult entry(String type, Object context, String name, List<String> routes, Class<?> clazz) {
+        DumpResult entry = new DumpResult();
         entry.type = type;
         entry.context = contextName(context);
         entry.name = name;

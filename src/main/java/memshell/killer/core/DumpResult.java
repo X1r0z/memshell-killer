@@ -1,15 +1,15 @@
-package memshell.killer.route;
+package memshell.killer.core;
 
-import memshell.killer.core.ClassMetadata;
+import memshell.killer.inspect.ClassInfo;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RouteEntry {
+public class DumpResult {
     public String type;
     public String context;
     public List<String> routes = new ArrayList<>();
     public String name;
     public String className;
-    public ClassMetadata classInfo;
+    public ClassInfo classInfo;
 }

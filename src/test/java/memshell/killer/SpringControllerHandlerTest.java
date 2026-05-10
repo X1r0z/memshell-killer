@@ -1,6 +1,6 @@
 package memshell.killer;
 
-import memshell.killer.route.RemoveResult;
+import memshell.killer.core.RemoveResult;
 import memshell.killer.route.spring.SpringControllerHandler;
 import org.junit.Test;
 

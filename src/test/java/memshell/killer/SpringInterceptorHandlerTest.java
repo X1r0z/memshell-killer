@@ -1,7 +1,7 @@
 package memshell.killer;
 
-import memshell.killer.route.RemoveResult;
-import memshell.killer.route.RouteEntry;
+import memshell.killer.core.RemoveResult;
+import memshell.killer.core.DumpResult;
 import memshell.killer.route.spring.SpringInterceptorHandler;
 import org.junit.Test;
 
@@ -18,7 +18,7 @@ public class SpringInterceptorHandlerTest {
         Mapping mapping = new Mapping();
         mapping.mappedInterceptors.add(new FakeMappedInterceptor(new BadInterceptor(), Arrays.asList("/shell/**")));
 
-        List<RouteEntry> routes = handler(mapping).dump();
+        List<DumpResult> routes = handler(mapping).dump();
 
         assertEquals(1, routes.size());
         assertEquals(BadInterceptor.class.getName(), routes.get(0).className);

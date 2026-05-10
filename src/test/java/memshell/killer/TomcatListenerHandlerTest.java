@@ -1,7 +1,7 @@
 package memshell.killer;
 
-import memshell.killer.route.RemoveResult;
-import memshell.killer.route.RouteEntry;
+import memshell.killer.core.RemoveResult;
+import memshell.killer.core.DumpResult;
 import memshell.killer.route.tomcat.TomcatListenerHandler;
 import org.junit.Test;
 
@@ -47,7 +47,7 @@ public class TomcatListenerHandlerTest {
     public void dumpAndRemoveLifecycleListeners() throws Exception {
         LifecycleMethodContext context = new LifecycleMethodContext();
 
-        List<RouteEntry> routes = handler(context).dump();
+        List<DumpResult> routes = handler(context).dump();
         RemoveResult result = handler(context).remove(BadListener.class.getName());
 
         assertFalse(routes.isEmpty());
@@ -57,8 +57,8 @@ public class TomcatListenerHandlerTest {
         assertEquals(SafeListener.class, context.lifecycleListeners[0].getClass());
     }
 
-    private boolean containsClass(List<RouteEntry> routes, String className) {
-        for (RouteEntry route : routes) {
+    private boolean containsClass(List<DumpResult> routes, String className) {
+        for (DumpResult route : routes) {
             if (className.equals(route.className)) {
                 return true;
             }

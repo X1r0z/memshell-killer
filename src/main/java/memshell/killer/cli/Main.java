@@ -1,7 +1,8 @@
 package memshell.killer.cli;
 
-import memshell.killer.core.Jsons;
-import memshell.killer.core.OperationRequest;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import memshell.killer.core.CommandRequest;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -14,9 +15,11 @@ import java.util.Base64;
 import java.util.concurrent.Callable;
 
 @Command(name = "memshell-killer", mixinStandardHelpOptions = true, subcommands = {
-        Main.DumpCommand.class, Main.JadCommand.class, Main.CallCommand.class, Main.RemoveCommand.class
+        Main.DumpCommand.class, Main.DecompileCommand.class, Main.CallCommand.class, Main.RemoveCommand.class
 })
 public class Main implements Runnable {
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+
     public static void main(String[] args) {
         int code = new CommandLine(new Main()).execute(args);
         System.exit(code);
@@ -31,14 +34,14 @@ public class Main implements Runnable {
         @Parameters(index = "0", description = "Target JVM pid")
         long pid;
 
-        protected abstract OperationRequest request();
+        protected abstract CommandRequest request();
 
         @Override
         public Integer call() throws Exception {
-            OperationRequest request = request();
+            CommandRequest request = request();
             File result = File.createTempFile("memshell-killer-", ".json");
             request.resultPath = result.getAbsolutePath();
-            String json = Jsons.GSON.toJson(request);
+            String json = GSON.toJson(request);
             String args = Base64.getUrlEncoder().withoutPadding().encodeToString(json.getBytes(StandardCharsets.UTF_8));
             String jar = Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
             AttachClient.loadAgent(pid, jar, args);
@@ -54,16 +57,16 @@ public class Main implements Runnable {
         String type;
 
         @Override
-        protected OperationRequest request() {
-            OperationRequest request = new OperationRequest();
+        protected CommandRequest request() {
+            CommandRequest request = new CommandRequest();
             request.command = "dump";
             request.type = type == null ? "all" : type;
             return request;
         }
     }
 
-    @Command(name = "jad", description = "Decompile a loaded class", mixinStandardHelpOptions = true)
-    static class JadCommand extends AgentCommand {
+    @Command(name = "decompile", description = "Decompile a loaded class", mixinStandardHelpOptions = true)
+    static class DecompileCommand extends AgentCommand {
         @Option(names = "--class-name", required = true)
         String className;
 
@@ -71,9 +74,9 @@ public class Main implements Runnable {
         String method;
 
         @Override
-        protected OperationRequest request() {
-            OperationRequest request = new OperationRequest();
-            request.command = "jad";
+        protected CommandRequest request() {
+            CommandRequest request = new CommandRequest();
+            request.command = "decompile";
             request.className = className;
             request.method = method;
             return request;
@@ -86,8 +89,8 @@ public class Main implements Runnable {
         String className;
 
         @Override
-        protected OperationRequest request() {
-            OperationRequest request = new OperationRequest();
+        protected CommandRequest request() {
+            CommandRequest request = new CommandRequest();
             request.command = "call";
             request.className = className;
             return request;
@@ -103,8 +106,8 @@ public class Main implements Runnable {
         String className;
 
         @Override
-        protected OperationRequest request() {
-            OperationRequest request = new OperationRequest();
+        protected CommandRequest request() {
+            CommandRequest request = new CommandRequest();
             request.command = "remove";
             request.type = type;
             request.className = className;

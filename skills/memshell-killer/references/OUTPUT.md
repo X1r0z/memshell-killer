@@ -20,40 +20,48 @@ Check `success` before reading command-specific fields. If `success` is `false`,
 
 ## `dump`
 
-Lists live Tomcat and Spring Web MVC route registrations. `data` is an object keyed by route type.
+Lists live Tomcat and Spring Web MVC route registrations. `data` is an array of route records. Use each record's `type` field to filter specific route types.
 
 ```json
 {
   "success": true,
-  "data": {
-    "filter": [
-      {
-        "type": "filter",
-        "context": "/app",
-        "routes": ["/*"],
-        "name": "suspiciousFilter",
+  "data": [
+    {
+      "type": "filter",
+      "context": "/app",
+      "routes": ["/*"],
+      "name": "suspiciousFilter",
+      "className": "com.example.SuspiciousFilter",
+      "classInfo": {
         "className": "com.example.SuspiciousFilter",
-        "classInfo": {
-          "className": "com.example.SuspiciousFilter",
-          "classLoader": "org.apache.catalina.loader.ParallelWebappClassLoader@1a2b3c",
-          "superClass": "java.lang.Object",
-          "interfaces": ["javax.servlet.Filter"],
-          "fields": ["private java.lang.String headerName"],
-          "methods": ["doFilter", "init", "destroy"]
-        }
+        "classLoader": "org.apache.catalina.loader.ParallelWebappClassLoader@1a2b3c",
+        "superClass": "java.lang.Object",
+        "interfaces": ["javax.servlet.Filter"],
+        "fields": ["private java.lang.String headerName"],
+        "methods": ["doFilter", "init", "destroy"]
       }
-    ],
-    "listener": [],
-    "valve": [],
-    "servlet": [],
-    "controller": [],
-    "interceptor": []
-  },
+    },
+    {
+      "type": "controller",
+      "context": "org.springframework.web.context.WebApplicationContext(/app)",
+      "routes": ["/admin/shell"],
+      "name": "shell",
+      "className": "com.example.SuspiciousController",
+      "classInfo": {
+        "className": "com.example.SuspiciousController",
+        "classLoader": "org.apache.catalina.loader.ParallelWebappClassLoader@1a2b3c",
+        "superClass": "java.lang.Object",
+        "interfaces": [],
+        "fields": [],
+        "methods": ["shell"]
+      }
+    }
+  ],
   "errors": []
 }
 ```
 
-Supported top-level `data` keys:
+Supported route types:
 
 | Key | Middleware | Description |
 |-----|------------|-------------|
@@ -86,28 +94,13 @@ Route entry fields:
 | `fields` | string[] | Declared fields |
 | `methods` | string[] | Declared methods |
 
-When a route type cannot be dumped, that key may contain an error object instead of an array:
-
-```json
-{
-  "success": true,
-  "data": {
-    "controller": {
-      "routes": [],
-      "error": "java.lang.IllegalStateException: ..."
-    }
-  },
-  "errors": []
-}
-```
-
-Flatten route arrays safely:
+Filter route records by type:
 
 ```bash
-jq '.data | to_entries[] | select(.value | type == "array") | .value[] | {type, context, routes, name, className}'
+jq '.data[] | select(.type == "filter") | {type, context, routes, name, className}'
 ```
 
-## `jad`
+## `decompile`
 
 Decompiles a loaded class, or one method when `--method` is provided.
 

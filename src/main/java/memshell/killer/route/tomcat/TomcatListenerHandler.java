@@ -1,8 +1,8 @@
 package memshell.killer.route.tomcat;
 
-import memshell.killer.core.RouteType;
-import memshell.killer.route.RemoveResult;
-import memshell.killer.route.RouteEntry;
+import memshell.killer.route.RouteType;
+import memshell.killer.core.RemoveResult;
+import memshell.killer.core.DumpResult;
 import memshell.killer.route.RouteHandler;
 import memshell.killer.util.Reflects;
 
@@ -18,8 +18,8 @@ public class TomcatListenerHandler implements RouteHandler {
     }
 
     @Override
-    public List<RouteEntry> dump() {
-        List<RouteEntry> entries = new ArrayList<>();
+    public List<DumpResult> dump() {
+        List<DumpResult> entries = new ArrayList<>();
         for (Object context : contexts()) {
             addListeners(context, entries, applicationListeners(context));
             addListeners(context, entries, lifecycleListeners(context));
@@ -39,7 +39,7 @@ public class TomcatListenerHandler implements RouteHandler {
         return result;
     }
 
-    private void addListeners(Object context, List<RouteEntry> entries, Object listeners) {
+    private void addListeners(Object context, List<DumpResult> entries, Object listeners) {
         for (Object listener : Reflects.asList(listeners)) {
             if (listener != null) {
                 entries.add(TomcatSupport.entry(type(), context, listener.getClass().getName(), Collections.singletonList("/*"), listener.getClass()));
