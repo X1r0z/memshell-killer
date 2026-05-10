@@ -138,12 +138,15 @@ Builds local class-level method call evidence from the loaded class bytecode.
   "data": {
     "className": "com.example.SuspiciousFilter",
     "edges": {
-      "doFilter": ["check", "java.lang.Runtime.exec"],
-      "check": ["javax.servlet.ServletRequest.getParameter"]
+      "doFilter(ServletRequest, ServletResponse, FilterChain): void": [
+        "check(ServletRequest): boolean",
+        "java.lang.Runtime.exec"
+      ],
+      "check(ServletRequest): boolean": ["javax.servlet.ServletRequest.getParameter"]
     },
     "chains": [
-      "doFilter -> check -> javax.servlet.ServletRequest.getParameter",
-      "doFilter -> java.lang.Runtime.exec"
+      "doFilter(ServletRequest, ServletResponse, FilterChain): void -> check(ServletRequest): boolean -> javax.servlet.ServletRequest.getParameter",
+      "doFilter(ServletRequest, ServletResponse, FilterChain): void -> java.lang.Runtime.exec"
     ]
   },
   "errors": []
@@ -153,7 +156,7 @@ Builds local class-level method call evidence from the loaded class bytecode.
 | Field | Type | Description |
 |-------|------|-------------|
 | `className` | string | Class requested with `--class-name` |
-| `edges` | object | Map of method name to direct callees |
+| `edges` | object | Map of readable method signature to direct callees |
 | `chains` | string[] | Readable call chains as strings |
 
 `call` is class-local evidence, not whole-application data-flow proof. Absence of a dangerous sink does not prove the class is benign.

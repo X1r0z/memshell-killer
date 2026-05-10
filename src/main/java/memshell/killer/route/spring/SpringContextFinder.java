@@ -13,15 +13,20 @@ public class SpringContextFinder {
     public Set<Object> find() {
         Set<Object> contexts = new HashSet<>();
         Set<ClassLoader> loaders = new HashSet<>();
+        Set<ClassLoader> liveBeansViewLoaders = new HashSet<>();
         for (Thread thread : Thread.getAllStackTraces().keySet()) {
             ClassLoader loader = thread.getContextClassLoader();
             if (loader == null) {
                 continue;
             }
             loaders.add(loader);
-            addLiveBeansViewContexts(loader, contexts);
         }
-        addTomcatContexts(contexts, loaders);
+        for (ClassLoader loader : new HashSet<>(loaders)) {
+            if (liveBeansViewLoaders.add(loader)) {
+                addLiveBeansViewContexts(loader, contexts);
+            }
+        }
+        addTomcatContexts(contexts, loaders, liveBeansViewLoaders);
         addContextLoaderContexts(loaders, contexts);
         addRequestContext(contexts);
         return contexts;
@@ -62,7 +67,7 @@ public class SpringContextFinder {
         }
     }
 
-    private void addLiveBeansViewContexts(ClassLoader loader, Set<Object> contexts) {
+    protected void addLiveBeansViewContexts(ClassLoader loader, Set<Object> contexts) {
         try {
             Class<?> liveBeansView = loader.loadClass("org.springframework.context.support.LiveBeansView");
             Object view = liveBeansView.getDeclaredConstructor().newInstance();
@@ -77,12 +82,14 @@ public class SpringContextFinder {
         }
     }
 
-    private void addTomcatContexts(Set<Object> contexts, Set<ClassLoader> loaders) {
+    private void addTomcatContexts(Set<Object> contexts, Set<ClassLoader> loaders, Set<ClassLoader> liveBeansViewLoaders) {
         for (Object tomcatContext : new TomcatContextFinder().find()) {
             ClassLoader loader = TomcatSupport.webAppClassLoader(tomcatContext);
             if (loader != null) {
                 loaders.add(loader);
-                addLiveBeansViewContexts(loader, contexts);
+                if (liveBeansViewLoaders.add(loader)) {
+                    addLiveBeansViewContexts(loader, contexts);
+                }
             }
             Object servletContext = Reflects.invokeAnyQuiet(tomcatContext, "getServletContext");
             addServletContextAttributes(contexts, servletContext);

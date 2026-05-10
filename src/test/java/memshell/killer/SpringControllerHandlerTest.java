@@ -27,6 +27,19 @@ public class SpringControllerHandlerTest {
     }
 
     @Test
+    public void removeRequestMappingFallsBackWhenUnregisterDoesNotRemove() {
+        NoOpRequestMapping mapping = new NoOpRequestMapping();
+        Object key = "requestMappingInfo";
+        mapping.handlerMethods.put(key, new HandlerMethod(BadController.class));
+
+        RemoveResult result = handler(mapping).remove(BadController.class.getName());
+
+        assertEquals(1, result.removed);
+        assertEquals(1, mapping.unregisterMappingCalls);
+        assertFalse(mapping.handlerMethods.containsKey(key));
+    }
+
+    @Test
     public void removeHandlerMapPrefersFrameworkUnregisterHandler() {
         UrlHandlerMapping mapping = new UrlHandlerMapping();
         mapping.handlerMap.put("/shell", new BadController());
@@ -67,7 +80,7 @@ public class SpringControllerHandlerTest {
     }
 
     static class RequestMapping {
-        Map<Object, Object> handlerMethods = new HashMap<Object, Object>();
+        Map<Object, Object> handlerMethods = new FailOnMissingRemoveMap();
         int unregisterMappingCalls;
 
         Map<Object, Object> getHandlerMethods() {
@@ -77,6 +90,19 @@ public class SpringControllerHandlerTest {
         void unregisterMapping(Object key) {
             unregisterMappingCalls++;
             handlerMethods.remove(key);
+        }
+    }
+
+    static class NoOpRequestMapping {
+        Map<Object, Object> handlerMethods = new HashMap<Object, Object>();
+        int unregisterMappingCalls;
+
+        Map<Object, Object> getHandlerMethods() {
+            return handlerMethods;
+        }
+
+        void unregisterMapping(Object key) {
+            unregisterMappingCalls++;
         }
     }
 
@@ -107,5 +133,15 @@ public class SpringControllerHandlerTest {
     }
 
     static class BadController {
+    }
+
+    static class FailOnMissingRemoveMap extends HashMap<Object, Object> {
+        @Override
+        public Object remove(Object key) {
+            if (!containsKey(key)) {
+                throw new AssertionError("remove called after key was already removed");
+            }
+            return super.remove(key);
+        }
     }
 }

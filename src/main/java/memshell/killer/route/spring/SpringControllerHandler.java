@@ -84,9 +84,14 @@ public class SpringControllerHandler implements RouteHandler {
             }
             for (Object key : keys) {
                 Reflects.invokeAnyQuiet(mapping, "unregisterMapping", key);
-                ((Map<?, ?>) handlerMethods).remove(key);
-                removed++;
-                result.details.add(SpringSupport.contextName(mapping) + " controller " + key);
+                Map<?, ?> methods = (Map<?, ?>) handlerMethods;
+                if (methods.containsKey(key)) {
+                    methods.remove(key);
+                }
+                if (!methods.containsKey(key)) {
+                    removed++;
+                    result.details.add(SpringSupport.contextName(mapping) + " controller " + key);
+                }
             }
         }
         return removed;
@@ -104,10 +109,15 @@ public class SpringControllerHandler implements RouteHandler {
                 }
             }
             for (Object key : keys) {
-                unregisterUrlHandler(mapping, (Map<?, ?>) handlerMap, key);
-                ((Map<?, ?>) handlerMap).remove(key);
-                removed++;
-                result.details.add(SpringSupport.contextName(mapping) + " handlerMap " + key);
+                Map<?, ?> handlers = (Map<?, ?>) handlerMap;
+                unregisterUrlHandler(mapping, handlers, key);
+                if (handlers.containsKey(key)) {
+                    handlers.remove(key);
+                }
+                if (!handlers.containsKey(key)) {
+                    removed++;
+                    result.details.add(SpringSupport.contextName(mapping) + " handlerMap " + key);
+                }
             }
         }
         return removed;

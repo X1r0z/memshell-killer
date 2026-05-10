@@ -18,11 +18,24 @@ public class CallGraphServiceTest {
         byte[] bytes = classBytes(Fixture.class);
         CallGraphResult result = CallGraphService.analyzeBytes(Fixture.class.getName(), bytes);
 
-        Assert.assertTrue(result.edges.get("a").contains("b"));
-        Assert.assertTrue(result.edges.get("b").contains("c"));
-        Assert.assertTrue(result.chains.toString(), result.chains.contains("a -> b -> c"));
-        Assert.assertTrue(result.edges.get("d").contains("e"));
-        Assert.assertTrue(result.edges.get("d").contains("f.g"));
+        Assert.assertTrue(result.edges.get("a(): void").contains("b(): void"));
+        Assert.assertTrue(result.edges.get("b(): void").contains("c(): void"));
+        Assert.assertTrue(result.chains.toString(), result.chains.contains("a(): void -> b(): void -> c(): void"));
+        Assert.assertTrue(result.edges.get("d(): void").contains("e(): void"));
+        Assert.assertTrue(result.edges.get("d(): void").contains("f.g"));
+    }
+
+    @Test
+    public void separatesOverloadedInternalCalls() throws Exception {
+        byte[] bytes = classBytes(Fixture.class);
+        CallGraphResult result = CallGraphService.analyzeBytes(Fixture.class.getName(), bytes);
+
+        Assert.assertTrue(result.edges.containsKey("a(): void"));
+        Assert.assertTrue(result.edges.containsKey("a(String): String"));
+        Assert.assertTrue(result.edges.get("a(): void").contains("b(): void"));
+        Assert.assertTrue(result.edges.get("a(String): String").contains("b(String): String"));
+        Assert.assertFalse(result.edges.get("a(): void").contains("b(String): String"));
+        Assert.assertTrue(result.chains.toString(), result.chains.contains("a(String): String -> b(String): String -> java.lang.String.trim"));
     }
 
     @Test
@@ -35,7 +48,7 @@ public class CallGraphServiceTest {
         Assert.assertTrue(json, json.contains("\"className\""));
         Assert.assertTrue(json, json.contains("\"edges\""));
         Assert.assertTrue(json, json.contains("\"chains\""));
-        Assert.assertTrue(json, json.contains("\"a\""));
+        Assert.assertTrue(json, json.contains("\"a(): void\""));
     }
 
     private static byte[] classBytes(Class<?> type) throws Exception {
@@ -57,8 +70,16 @@ public class CallGraphServiceTest {
             b();
         }
 
+        String a(String value) {
+            return b(value);
+        }
+
         void b() {
             c();
+        }
+
+        String b(String value) {
+            return value.trim();
         }
 
         void c() {

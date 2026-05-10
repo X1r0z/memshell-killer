@@ -9,7 +9,9 @@ import memshell.killer.util.Reflects;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 
 public class TomcatListenerHandler implements RouteHandler {
     @Override
@@ -33,8 +35,9 @@ public class TomcatListenerHandler implements RouteHandler {
         result.type = type();
         result.className = className;
         for (Object context : contexts()) {
-            result.removed += removeApplicationListeners(context, className, result);
-            result.removed += removeLifecycleListeners(context, className, result);
+            Set<Object> removedListeners = Collections.newSetFromMap(new IdentityHashMap<Object, Boolean>());
+            result.removed += removeApplicationListeners(context, className, result, removedListeners);
+            result.removed += removeLifecycleListeners(context, className, result, removedListeners);
         }
         return result;
     }
@@ -51,16 +54,16 @@ public class TomcatListenerHandler implements RouteHandler {
         return new TomcatContextFinder().find();
     }
 
-    private int removeApplicationListeners(Object context, String className, RemoveResult result) {
+    private int removeApplicationListeners(Object context, String className, RemoveResult result, Set<Object> removedListeners) {
         int removed = 0;
-        removed += removeFromCollectionField(context, "applicationEventListenersList", className);
-        removed += removeFromArrayField(context, "applicationEventListenersObjects", className);
+        removed += removeFromCollectionField(context, "applicationEventListenersList", className, removedListeners);
+        removed += removeFromArrayField(context, "applicationEventListenersObjects", className, removedListeners);
         Object listeners = Reflects.invokeQuiet(context, "getApplicationEventListeners", null, null);
         if (listeners instanceof List) {
-            int removedHere = removeFromList((List<?>) listeners, className);
+            int removedHere = removeFromList((List<?>) listeners, className, removedListeners);
             removed += removedHere;
         } else if (listeners != null && listeners.getClass().isArray()) {
-            removed += removeReturnedArray(context, listeners, className);
+            removed += removeReturnedArray(context, listeners, className, removedListeners);
         }
         if (removed > 0) {
             result.details.add(TomcatSupport.contextName(context) + " listener " + className);
@@ -68,7 +71,7 @@ public class TomcatListenerHandler implements RouteHandler {
         return removed;
     }
 
-    private int removeLifecycleListeners(Object context, String className, RemoveResult result) {
+    private int removeLifecycleListeners(Object context, String className, RemoveResult result, Set<Object> removedListeners) {
         int removed = 0;
         for (Object listener : new ArrayList<>(Reflects.asList(lifecycleListeners(context)))) {
             if (listener == null || !listener.getClass().getName().equals(className)) {
@@ -78,11 +81,11 @@ public class TomcatListenerHandler implements RouteHandler {
             Reflects.invokeAnyQuiet(context, "removeLifecycleListener", listener);
             int after = Reflects.asList(lifecycleListeners(context)).size();
             if (after < before) {
-                removed++;
+                removed += removedListeners.add(listener) ? 1 : 0;
             }
         }
-        removed += removeFromCollectionField(context, "lifecycleListeners", className);
-        removed += removeFromArrayField(context, "lifecycleListeners", className);
+        removed += removeFromCollectionField(context, "lifecycleListeners", className, removedListeners);
+        removed += removeFromArrayField(context, "lifecycleListeners", className, removedListeners);
         if (removed > 0) {
             result.details.add(TomcatSupport.contextName(context) + " lifecycleListener " + className);
         }
@@ -103,67 +106,67 @@ public class TomcatListenerHandler implements RouteHandler {
         return listeners == null ? Reflects.getQuiet(context, "lifecycleListeners") : listeners;
     }
 
-    private int removeFromList(List<?> list, String className) {
+    private int removeFromList(List<?> list, String className, Set<Object> removedListeners) {
         int removed = 0;
         for (int i = list.size() - 1; i >= 0; i--) {
             Object item = list.get(i);
             if (item != null && item.getClass().getName().equals(className)) {
                 list.remove(i);
-                removed++;
+                removed += removedListeners.add(item) ? 1 : 0;
             }
         }
         return removed;
     }
 
-    private int removeFromCollectionField(Object context, String fieldName, String className) {
+    private int removeFromCollectionField(Object context, String fieldName, String className, Set<Object> removedListeners) {
         Object value = Reflects.getQuiet(context, fieldName);
         if (!(value instanceof List)) {
             return 0;
         }
-        return removeFromList((List<?>) value, className);
+        return removeFromList((List<?>) value, className, removedListeners);
     }
 
-    private int removeFromArrayField(Object context, String fieldName, String className) {
+    private int removeFromArrayField(Object context, String fieldName, String className, Set<Object> removedListeners) {
         Object listeners = Reflects.getQuiet(context, fieldName);
         if (listeners == null || !listeners.getClass().isArray()) {
             return 0;
         }
         List<Object> kept = new ArrayList<>();
-        int removed = 0;
+        List<Object> removed = new ArrayList<>();
         for (Object listener : Reflects.asList(listeners)) {
             if (listener != null && listener.getClass().getName().equals(className)) {
-                removed++;
+                removed.add(listener);
             } else {
                 kept.add(listener);
             }
         }
-        if (removed == 0) {
+        if (removed.isEmpty()) {
             return 0;
         }
         try {
             Reflects.set(context, fieldName, arrayOf(listeners.getClass().getComponentType(), kept));
-            return removed;
+            return rememberRemoved(removedListeners, removed);
         } catch (Throwable ignored) {
             return 0;
         }
     }
 
-    private int removeReturnedArray(Object context, Object listeners, String className) {
+    private int removeReturnedArray(Object context, Object listeners, String className, Set<Object> removedListeners) {
         List<Object> kept = new ArrayList<>();
-        int removed = 0;
+        List<Object> removed = new ArrayList<>();
         for (Object listener : Reflects.asList(listeners)) {
             if (listener != null && listener.getClass().getName().equals(className)) {
-                removed++;
+                removed.add(listener);
             } else {
                 kept.add(listener);
             }
         }
-        if (removed == 0) {
+        if (removed.isEmpty()) {
             return 0;
         }
         Reflects.invokeAnyQuiet(context, "setApplicationEventListeners", arrayOf(listeners.getClass().getComponentType(), kept));
         Object after = Reflects.invokeQuiet(context, "getApplicationEventListeners", null, null);
-        return Reflects.asList(after).size() == kept.size() ? removed : 0;
+        return Reflects.asList(after).size() == kept.size() ? rememberRemoved(removedListeners, removed) : 0;
     }
 
     private Object arrayOf(Class<?> component, List<Object> values) {
@@ -172,5 +175,13 @@ public class TomcatListenerHandler implements RouteHandler {
             Array.set(array, i, values.get(i));
         }
         return array;
+    }
+
+    private int rememberRemoved(Set<Object> removedListeners, List<Object> listeners) {
+        int added = 0;
+        for (Object listener : listeners) {
+            added += removedListeners.add(listener) ? 1 : 0;
+        }
+        return added;
     }
 }
