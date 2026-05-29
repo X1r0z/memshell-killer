@@ -111,6 +111,10 @@ Build class-local call evidence.
 java -jar memshell-killer.jar call --class-name <className> <pid>
 ```
 
+| Option | Description |
+|--------|-------------|
+| `--class-name` | Fully qualified loaded class name |
+
 Use this when decompiled behavior is unclear or you need concise evidence that request-handling methods reach suspicious sinks (e.g. `Runtime.exec`, `ProcessBuilder`, `defineClass`, `ScriptEngine`). The result is class-local evidence, not whole-application data-flow proof.
 
 ```bash
@@ -125,6 +129,11 @@ Remove a confirmed route registration.
 ```bash
 java -jar memshell-killer.jar remove --type <type> --class-name <className> <pid>
 ```
+
+| Option | Description |
+|--------|-------------|
+| `--type` | Route type (`filter`/`listener`/`valve`/`servlet`/`controller`/`interceptor`) |
+| `--class-name` | Fully qualified loaded class name |
 
 Use removal only for **confirmed** malicious registrations, with the exact `type` and `className` from a prior `dump`.
 
